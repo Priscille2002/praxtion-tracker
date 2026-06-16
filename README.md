@@ -99,6 +99,7 @@ Handles the application's behavior:
 Keeping this logic separate from the UI helped reduce duplication and made the components easier to understand.
 
 It also means that if localStorage were replaced by an API in the future, most of the changes would happen in this file.
+Two utility functions were also extracted to keep the logic clean and testable. metrics.js computes the dashboard numbers from the controls array. validation.js checks whether a given status is one of the four allowed values.
 
 UI Components
 
@@ -112,20 +113,20 @@ Each component focuses on a single responsibility.
 | ControlTable.jsx  | Displays the controls        |
 | StatusBadge.jsx   | Shows the current status     |
 | EvidenceModal.jsx | Adds notes and evidence      |
-| Toast.jsx         | Shows save confirmations     |
+
 
 This approach made the interface easier to reason about and avoided creating large components with multiple responsibilities.
 
 
 6. Technical Decisions
 
-Why React and Vite?
+# Why React and Vite?
 
 I chose React because reusable components fit naturally with this type of interface.
 
 I used Vite because it provides a simple setup and fast development experience.
 
-Why localStorage?
+# Why localStorage?
 
 The assessment allowed local persistence.
 
@@ -133,7 +134,7 @@ Instead of spending time building a backend, I focused on the core functionality
 
 This trade-off felt more appropriate for a short technical assessment.
 
-Why keep filters in App?
+# Why keep filters in App?
 
 Filters affect what users see but do not modify the underlying data.
 
@@ -141,19 +142,31 @@ For that reason, I treated them as UI state rather than application state.
 
 The dashboard always reflects the full assessment instead of only the filtered results.
 
-7. Security Notes
+# Why extract metrics and validation into separate files?
 
-Even though this is not a production application, I still tried to address a few common concerns:
+It made them easier to test. Pure functions with no side effects are straightforward to verify because the same input always produces the same output. It also kept the hook focused on managing state rather than doing calculations.
 
-* invalid statuses are rejected;
-* user input is trimmed before storage;
-* external links use `rel="noopener noreferrer"`;
-* corrupted localStorage data falls back to default values;
-* React's default escaping prevents user input from being rendered as executable HTML.
+7. Input Validation and Security
 
----
+Even though this is not a production application, I tried to handle a few things carefully.
 
-8. How to Use the Application
+Status values are validated before any update is applied. If a value is not in the allowed list, the update is ignored. Notes are limited to 1000 characters and evidence references to 500 characters before being stored. This prevents unexpectedly large inputs from being saved to localStorage.
+
+External links are only rendered as clickable anchors if the evidence reference starts with http. All of them include rel="noopener noreferrer" to prevent reverse tabnapping. If localStorage contains corrupted or unexpected data on load, the application resets cleanly to the default controls instead of crashing. React's default output escaping also means user input is never rendered as executable HTML.
+
+8. Tests
+
+I wrote unit tests for the two most security-sensitive functions in the application.
+
+```bash
+npm test
+```
+
+metrics.test.js verifies that completion percentages are calculated correctly across different combinations of statuses, including edge cases like an empty control list.
+
+validation.test.js verifies that only the four allowed status strings are accepted, and that variations like empty strings or lowercase versions are correctly rejected.
+
+9. How to Use the Application
 
  - Start the application.
 
@@ -168,33 +181,19 @@ Even though this is not a production application, I still tried to address a few
  -  Refresh the page to confirm that changes are preserved.
 
 
-9. What I Would Improve With More Time
+10. What I Would Improve With More Time
 
-If this project evolved into a more complete compliance solution, I would consider adding:
-
-* file uploads for evidence instead of text-only references;
-* export to CSV or PDF for reporting purposes;
-* search functionality for larger assessments;
-* audit trails showing who made changes, what changed, and when;
-* authentication and role-based access control;
-* review and approval workflows for evidence validation;
-* unit and integration tests;
-* backend persistence using a database;
-* support for multiple users;
-* accessibility improvements.
+If this project evolved into a more complete compliance solution, I would look at adding real file uploads for evidence instead of text references, a PDF export option for client reporting, search functionality for larger control sets, an audit trail showing who changed what and when, authentication with role-based access control, and backend persistence with a proper database. I would also add integration tests alongside the unit tests already in place, and spend more time on accessibility.
 
 I think these additions would make the tool more suitable for real-world compliance environments.
 
-10. Time Spent
 
-I spent approximately 10–12 hours on this project.
-A significant portion of that time went into understanding the requirements, revisiting React concepts, refining the implementation, testing the application, and documenting my decisions.
-I also spent time simplifying the code so that I could confidently explain the implementation and the reasoning behind my choices.
+11. Time Spent
 
-11. Use of AI Tools
+I spent around 10 to 12 hours on this project overall. That includes the time I spent reading through the requirements, building the application step by step, testing it manually, and writing this documentation. I worked with an AI tool throughout the process, which is reflected in the section below.
+
+12. Use of AI Tools
 
 I used AI tools (Claude Anthropic, ChatGPT) selectively during this assessment to brainstorm ideas, review approaches, and challenge some design decisions.
-
 The final implementation was manually reviewed, adapted, tested, and simplified where appropriate.
-
 I also made sure that I understood the resulting code and could explain the reasoning behind the choices and trade-offs involved throughout the project.
