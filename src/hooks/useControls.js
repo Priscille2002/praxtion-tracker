@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { INITIAL_CONTROLS, STATUSES } from "../data/controls";
+import { computeMetrics } from "../utils/metrics";
+import { isValidStatus } from "../utils/validation";
 
+// Key used to store data in localStorage
 const STORAGE_KEY = "praxtion_controls";
 
 export function useControls() {
@@ -17,6 +20,7 @@ export function useControls() {
         return INITIAL_CONTROLS;
     });
 
+    // Save changes automatically
     useEffect(() => {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(controls));
@@ -26,7 +30,7 @@ export function useControls() {
     }, [controls]);
 
     function updateStatus(controlId, newStatus) {
-        if (!STATUSES.includes(newStatus)) return;
+        if (!isValidStatus(newStatus)) return;
         setControls((previousControls) =>
             previousControls.map((control) =>
                 control.id === controlId
@@ -56,15 +60,7 @@ export function useControls() {
     }
 
     function getMetrics() {
-        const total = controls.length;
-        const implemented = controls.filter((c) => c.status === "Implemented").length;
-        const inProgress = controls.filter((c) => c.status === "In Progress").length;
-        const notStarted = controls.filter((c) => c.status === "Not Started").length;
-        const notApplicable = controls.filter((c) => c.status === "Not Applicable").length;
-        const percentComplete =
-            total > 0 ? Math.round((implemented / total) * 100) : 0;
-
-        return { total, implemented, inProgress, notStarted, notApplicable, percentComplete };
+        return computeMetrics(controls);
     }
 
     return {
